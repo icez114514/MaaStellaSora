@@ -12,10 +12,10 @@ from utils import logger as logger_module
 logger = logger_module.get_logger("climb_tower_shop")
 
 
-def get_current_coin(
+def try_get_current_coin(
     context: Context,
     image: Optional[numpy.ndarray] = None
-) -> int:
+) -> Optional[int]:
     """获取当前金币数量。
 
     Args:
@@ -23,7 +23,7 @@ def get_current_coin(
         image: 截图，为 None 时自动截图。
 
     Returns:
-        int: 当前金币数量，识别失败时返回 0。
+        Optional[int]: 当前金币数量，识别失败时返回 None。
     """
     if image is None:
         image = context.tasker.controller.post_screencap().wait().get()
@@ -37,6 +37,18 @@ def get_current_coin(
         logger.debug(f"识别当前金币结果：{[r.text for r in reco_detail.all_results]}")
     else:
         logger.debug("未识别到任何关于当前金币的内容")
+
+    return None
+
+
+def get_current_coin(
+    context: Context,
+    image: Optional[numpy.ndarray] = None
+) -> int:
+    """获取当前金币数量，识别失败时按 0 金币处理。"""
+    coin = try_get_current_coin(context, image)
+    if coin is not None:
+        return coin
 
     logger.error("无法读取当前金币数量，将当作 0 金币处理")
     return 0
@@ -199,6 +211,38 @@ def is_assist_skill_unlocked(
         if required_melody in lv0_melody and current_melody < required_melody:
             return False
     return True
+
+
+@AgentServer.custom_action("auto_farm_650_action")
+class AutoFarm650Action(CustomAction):
+    """在第一次商店出现时检查金币，决定停止任务或放弃本轮。"""
+
+    RETURN_BUTTON = (65, 40)
+
+    def run(
+        self,
+        context: Context,
+        argv: CustomAction.RunArg,
+    ) -> bool:
+        node_data = context.get_node_data(argv.node_name) or {}
+        target_coin = int(node_data.get("attach", {}).get("target_coin", 1200))
+        image = context.tasker.controller.post_screencap().wait().get()
+        current_coin = try_get_current_coin(context, image)
+
+        if current_coin is None:
+            logger.error("自动刷650无法识别当前金币，为避免误放弃，本次任务停止")
+            context.tasker.post_stop()
+            return False
+
+        logger.info(f"自动刷650：第一次商店当前金币 {current_coin}/{target_coin}")
+        if current_coin >= target_coin:
+            logger.info("自动刷650已达到目标金币，停止任务")
+            context.tasker.post_stop()
+            return False
+
+        logger.info("自动刷650未达到目标金币，点击左上角返回按钮放弃本轮")
+        context.tasker.controller.post_click(*self.RETURN_BUTTON).wait()
+        return True
 
 
 @dataclass

@@ -38,16 +38,19 @@ class QuizRecognition(CustomRecognition):
             logger.error(f"[问题选择] 检测选项个数出现问题")
             return CustomRecognition.AnalyzeResult(box=None, detail={})
 
-        # 寻找最佳答案
         roi = self.ROIS[answer_count]
-        result_box = self._get_best_answer(context, argv.image, roi)
-        if result_box:
-            return CustomRecognition.AnalyzeResult(box=result_box, detail={})
+        node_data = context.get_node_data(argv.node_name) or {}
+        prefer_650 = node_data.get("attach", {}).get("prefer_650", False)
 
-        # 寻找赌 650 金币的答案
-        result_box = self._get_650_answer(context, argv.image, roi)
-        if result_box:
-            return CustomRecognition.AnalyzeResult(box=result_box, detail={})
+        selectors = (
+            (self._get_650_answer, self._get_best_answer)
+            if prefer_650
+            else (self._get_best_answer, self._get_650_answer)
+        )
+        for selector in selectors:
+            result_box = selector(context, argv.image, roi)
+            if result_box:
+                return CustomRecognition.AnalyzeResult(box=result_box, detail={})
 
         # 兜底，选择第一个选项
         logger.info(f"[问题选择] 选择第一个选项")

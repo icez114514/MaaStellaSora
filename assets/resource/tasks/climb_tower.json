@@ -5,6 +5,7 @@
             "entry": "星塔_入口_agent",
             "description": "新版爬塔目前仍在测试，如有问题请通过issue等渠道反馈",
             "option": [
+                "新版爬塔_自动刷650",
                 "新版爬塔_开始位置",
                 "新版爬塔_爬塔次数",
                 "新版爬塔_属性塔",
@@ -25,6 +26,42 @@
         }
     ],
     "option": {
+        "新版爬塔_自动刷650": {
+            "type": "switch",
+            "label": "自动刷650",
+            "description": "开启后会无视爬塔次数，重复挑战到第一次商店。金币达到1200时停止任务；未达到时放弃本轮并重新挑战。",
+            "default_case": "No",
+            "cases": [
+                {
+                    "name": "No"
+                },
+                {
+                    "name": "Yes",
+                    "pipeline_override": {
+                        "星塔_节点_进入商店_agent": {
+                            "next": [
+                                "星塔_自动刷650_检查金币_agent"
+                            ]
+                        },
+                        "星塔_循环用节点_agent": {
+                            "attach": {
+                                "repeat_until_stopped": true
+                            }
+                        },
+                        "星塔_节点_进行对话选择_新_agent": {
+                            "attach": {
+                                "prefer_650": true
+                            }
+                        },
+                        "星塔_节点_选择潜能_agent": {
+                            "attach": {
+                                "strict_650_mode": true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
         "新版爬塔_开始位置": {
             "type": "select",
             "label": "开始位置",

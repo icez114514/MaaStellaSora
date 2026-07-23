@@ -281,6 +281,88 @@
       "星塔_节点_商店_购物_agent"
     ]
   },
+  "星塔_自动刷650_检查金币_agent": {
+    "action": {
+      "type": "Custom",
+      "param": {
+        "custom_action": "auto_farm_650_action"
+      }
+    },
+    "attach": {
+      "target_coin": 1200
+    },
+    "next": [
+      "星塔_自动刷650_放弃_agent"
+    ],
+    "timeout": 5000
+  },
+  "星塔_自动刷650_放弃_agent": {
+    "recognition": {
+      "type": "OCR",
+      "param": {
+        "expected": [
+          "放弃"
+        ],
+        "roi": [
+          380,
+          460,
+          240,
+          110
+        ]
+      }
+    },
+    "action": {
+      "type": "Click",
+      "param": {
+        "target": [
+          400,
+          475,
+          200,
+          80
+        ]
+      }
+    },
+    "next": [
+      "星塔_自动刷650_放弃确认_agent"
+    ],
+    "post_delay": 800,
+    "timeout": 5000
+  },
+  "星塔_自动刷650_放弃确认_agent": {
+    "recognition": {
+      "type": "OCR",
+      "param": {
+        "expected": [
+          "确认"
+        ],
+        "roi": [
+          650,
+          470,
+          260,
+          110
+        ]
+      }
+    },
+    "action": {
+      "type": "Click",
+      "param": {
+        "target": [
+          700,
+          480,
+          170,
+          70
+        ]
+      }
+    },
+    "next": [
+      "星塔_保存记录_agent",
+      "[JumpBack]星塔_确认_agent",
+      "[JumpBack]星塔_点击空白处关闭_agent",
+      "[JumpBack]星塔_默契提升_agent"
+    ],
+    "post_delay": 800,
+    "timeout": 5000
+  },
   "星塔_节点_商店_购物_agent": {
     "action": {
       "type": "Custom",

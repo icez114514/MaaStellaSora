@@ -31,6 +31,10 @@ class AscensionLoop(CustomAction):
         if not node_data:
             node_data = {}
         attachment = node_data.get("attach", {})
+        if attachment.get("repeat_until_stopped", False):
+            logger.info("自动刷650模式：继续下一次爬塔")
+            return True
+
         loop_count = attachment.get("loop_count", 1)
         loop_count -= 1
         if loop_count > 0:

@@ -1,6 +1,10 @@
 # docs
 docs/node_modules
 docs/.vuepress/.temp
+
+# Local Python environment
+.venv/
+
 # Prerequisites
 *.d
 

@@ -124,6 +124,7 @@ class Parameters:
     max_failed_count: int
     max_potential_count: int
     # 自带默认值的参数
+    strict_650_mode: bool = False
     potential_layouts: PotentialLayouts = field(default_factory=lambda: PotentialLayouts())
     selected_potential_offset: int = 35
 
@@ -806,7 +807,9 @@ class GameRecommendedHandler(ChoosePotentialHandler):
 
     def choose(self) -> Potential | None:
         # 根据参数选择潜能选择器
-        if self.data.params.chooser.startswith("tower_8"):
+        if self.data.params.strict_650_mode:
+            best_potential = self.strict_650_chooser()
+        elif self.data.params.chooser.startswith("tower_8"):
             best_potential = self.tower_8_chooser()
         elif self.data.params.chooser == "default":
             best_potential = self._default_potential
@@ -819,6 +822,55 @@ class GameRecommendedHandler(ChoosePotentialHandler):
             logger.info(f"当前潜能数：{State.potential_count}/{self.data.params.max_potential_count}")
 
         return best_potential
+
+    def strict_650_chooser(self) -> Potential | None:
+        """自动刷650专用潜能策略。
+
+        核心潜能固定为1级，保留游戏推荐选择以便流程继续。
+        一般潜能只接受系统推荐等级为6的选项：
+        优先取得选取后等级正好为3的新潜能；
+        没有合格新潜能时，升级当前等级低于6且选取后等级不低于3的既有潜能。
+        """
+        if self.data.core_potential:
+            return next((p for p in self.data.potentials if p.recommended), None)
+
+        new_candidates = [
+            p for p in self.data.potentials
+            if p.recommended
+            and p.recommended_level == 6
+            and p.old_level == 0
+            and p.new_level == 3
+        ]
+        best_new = max(
+            new_candidates,
+            key=lambda p: (p.new_level, p.level_span),
+            default=None,
+        )
+        if best_new:
+            logger.info(
+                f"[自动刷650潜能策略] 选择新潜能，选取后等级 {best_new.new_level}"
+            )
+            return best_new
+
+        upgrade_candidates = [
+            p for p in self.data.potentials
+            if p.recommended
+            and p.recommended_level == 6
+            and 0 < p.old_level < 6
+            and p.new_level > p.old_level
+            and p.new_level >= 3
+        ]
+        best_upgrade = max(
+            upgrade_candidates,
+            key=lambda p: (p.level_span, p.new_level, p.old_level),
+            default=None,
+        )
+        if best_upgrade:
+            logger.info(
+                "[自动刷650潜能策略] 没有新潜能，"
+                f"升级既有潜能 {best_upgrade.old_level}→{best_upgrade.new_level}"
+            )
+        return best_upgrade
 
     def tower_8_chooser(self) -> Potential | None:
         """
@@ -1091,7 +1143,9 @@ class ChoosePotentialAction(CustomAction):
         data.potential_count = screen.get_potential_count(data.core_potential, image)
 
         # 加载相应的潜能处理类
-        if data.params.handler == "json":
+        if data.params.strict_650_mode:
+            handler = GameRecommendedHandler(screen, data)
+        elif data.params.handler == "json":
             handler = AssistantPriorityHandler(screen, data)
         elif data.params.handler == "default+":
             handler = GameRecommendedHandler(screen, data)
@@ -1106,6 +1160,14 @@ class ChoosePotentialAction(CustomAction):
             elif data.refreshable:
                 logger.info("没有找到符合条件的潜能，尝试刷新")
                 handler.refresh()
+            elif data.params.strict_650_mode:
+                logger.error(
+                    "自动刷650未找到推荐等级6且选取后等级3的新潜能，"
+                    "也没有可升级的推荐等级6既有潜能，"
+                    "刷新次数已用完，停止任务以避免误选"
+                )
+                context.tasker.post_stop()
+                return CustomAction.RunResult(success=False)
             else:
                 logger.info("[潜能选择] 没有找到符合条件的潜能，将按照保底顺序选择")
                 potential = handler.choose_fallback_potential()

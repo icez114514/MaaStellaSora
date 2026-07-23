@@ -37,6 +37,24 @@
             }
         }
     },
+    "星塔_自动刷650_放弃_agent": {
+        "recognition": {
+            "param": {
+                "expected": [
+                    "放棄"
+                ]
+            }
+        }
+    },
+    "星塔_自动刷650_放弃确认_agent": {
+        "recognition": {
+            "param": {
+                "expected": [
+                    "確認"
+                ]
+            }
+        }
+    },
     "星塔_节点_商店_购物_agent": {
         "attach": {
             "lang_type": "tw"
