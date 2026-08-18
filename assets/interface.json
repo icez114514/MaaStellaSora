@@ -70,6 +70,44 @@
                 "{PROJECT_DIR}/resource/base",
                 "{PROJECT_DIR}/resource/jp"
             ]
+        },
+        {
+            "name": "官服 5120x2160",
+            "description": "5120×2160 超宽屏专用；不会影响原官服资源。",
+            "path": [
+                "{PROJECT_DIR}/resource/base",
+                "{PROJECT_DIR}/resource/ultrawide_5120/base"
+            ]
+        },
+        {
+            "name": "台服 5120x2160",
+            "description": "5120×2160 超宽屏专用；不会影响原台服资源。",
+            "path": [
+                "{PROJECT_DIR}/resource/base",
+                "{PROJECT_DIR}/resource/tw",
+                "{PROJECT_DIR}/resource/ultrawide_5120/base",
+                "{PROJECT_DIR}/resource/ultrawide_5120/tw"
+            ]
+        },
+        {
+            "name": "国际服 5120x2160",
+            "description": "5120×2160 超宽屏专用；不会影响原国际服资源。",
+            "path": [
+                "{PROJECT_DIR}/resource/base",
+                "{PROJECT_DIR}/resource/en",
+                "{PROJECT_DIR}/resource/ultrawide_5120/base",
+                "{PROJECT_DIR}/resource/ultrawide_5120/en"
+            ]
+        },
+        {
+            "name": "日服 5120x2160",
+            "description": "5120×2160 超宽屏专用；不会影响原日服资源。",
+            "path": [
+                "{PROJECT_DIR}/resource/base",
+                "{PROJECT_DIR}/resource/jp",
+                "{PROJECT_DIR}/resource/ultrawide_5120/base",
+                "{PROJECT_DIR}/resource/ultrawide_5120/jp"
+            ]
         }
     ],
     "import": [

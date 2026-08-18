@@ -9,6 +9,7 @@ from maa.custom_action import CustomAction
 from maa.context import Context
 
 from utils import logger as logger_module
+from utils.ultrawide import adapt_point, adapt_rect, image_size
 logger = logger_module.get_logger("climb_tower_shop")
 
 
@@ -184,7 +185,8 @@ def is_assist_skill_unlocked(
         w = 863 + 42 - x
         roi = [x, 285, w, 22]
     else:
-        roi = [863, 285, 42, 22]
+        width, height = image_size(image)
+        roi = adapt_rect([863, 285, 42, 22], width, height)
     pipeline_override = {
         "星塔_节点_商店_购买协奏音符_核实数量_agent": {
             "recognition": {
@@ -241,7 +243,9 @@ class AutoFarm650Action(CustomAction):
             return False
 
         logger.info("自动刷650未达到目标金币，点击左上角返回按钮放弃本轮")
-        context.tasker.controller.post_click(*self.RETURN_BUTTON).wait()
+        width, height = image_size(image)
+        return_button = adapt_point(self.RETURN_BUTTON, width, height)
+        context.tasker.controller.post_click(*return_button).wait()
         return True
 
 
@@ -379,6 +383,9 @@ class GridInfo:
     checked: bool = False
     buy_type: str = ""
     buy_priority: int = 0
+    item_roi_override: Optional[list[int]] = None
+    price_roi_override: Optional[list[int]] = None
+    name_roi_override: Optional[list[int]] = None
 
     @property
     def item_roi(self) -> list[int]:
@@ -387,7 +394,10 @@ class GridInfo:
         Returns:
             list[int, int, int, int]: 道具ROI区域的坐标，(x, y, w, h)。
         """
-        return ShopAction.GRID_ROIS[self.grid_num-1]["item_roi"]
+        return (
+            self.item_roi_override
+            or ShopAction.GRID_ROIS[self.grid_num-1]["item_roi"]
+        )
 
     @property
     def price_roi(self) -> list[int]:
@@ -396,7 +406,10 @@ class GridInfo:
         Returns:
             list[int, int, int, int]: 道具价格ROI区域的坐标，(x, y, w, h)。
         """
-        return ShopAction.GRID_ROIS[self.grid_num-1]["price_roi"]
+        return (
+            self.price_roi_override
+            or ShopAction.GRID_ROIS[self.grid_num-1]["price_roi"]
+        )
 
     @property
     def name_roi(self) -> list[int]:
@@ -405,7 +418,10 @@ class GridInfo:
         Returns:
             list[int, int, int, int]: 道具名称ROI区域的坐标，(x, y, w, h)。
         """
-        return ShopAction.GRID_ROIS[self.grid_num-1]["name_roi"]
+        return (
+            self.name_roi_override
+            or ShopAction.GRID_ROIS[self.grid_num-1]["name_roi"]
+        )
 
     @property
     def discount(self) -> float:
@@ -983,8 +999,16 @@ class ShopAction(CustomAction):
         """
         grids_info = []
         lang_type = data.lang_type
+        width, height = image_size(image)
+        grid_rois = [
+            {
+                key: adapt_rect(roi, width, height)
+                for key, roi in grid.items()
+            }
+            for grid in self.GRID_ROIS
+        ]
 
-        for i, grid_roi in enumerate(self.GRID_ROIS):
+        for i, grid_roi in enumerate(grid_rois):
             logger.debug(f"正在识别第 {i + 1} 个格子")
             item_name, item_quantity, item_price = self._get_single_grid_info(
                 context, grid_roi["price_roi"], grid_roi["name_roi"], lang_type, image
@@ -995,7 +1019,10 @@ class ShopAction(CustomAction):
                     item_name=item_name,
                     item_quantity=item_quantity,
                     item_price=item_price,
-                    display_name=ShopAction.ITEM_NAMES.get(item_name, {}).get(data.lang_type, ["?"])[0]
+                    display_name=ShopAction.ITEM_NAMES.get(item_name, {}).get(data.lang_type, ["?"])[0],
+                    item_roi_override=grid_roi["item_roi"],
+                    price_roi_override=grid_roi["price_roi"],
+                    name_roi_override=grid_roi["name_roi"],
                 ))
             else:
                 logger.error(

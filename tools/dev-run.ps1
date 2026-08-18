@@ -11,6 +11,7 @@ $installRoot = Join-Path $repoRoot 'install'
 $embeddedPython = Join-Path $installRoot 'python\python.exe'
 $resourceChecker = Join-Path $repoRoot 'check_resource.py'
 $resourceSource = Join-Path $repoRoot 'assets\resource\base'
+$ultrawideGenerator = Join-Path $repoRoot 'tools\generate_ultrawide_resource.py'
 $installer = Join-Path $repoRoot 'tools\ci\install.py'
 $interfaceSource = Join-Path $repoRoot 'assets\interface.json'
 $runtimeInterface = Join-Path $installRoot 'interface.json'
@@ -22,6 +23,7 @@ foreach ($requiredPath in @(
     $embeddedPython,
     $resourceChecker,
     $resourceSource,
+    $ultrawideGenerator,
     $installer,
     $interfaceSource,
     $mfaExecutable
@@ -190,6 +192,14 @@ Stop-DevelopmentMfa
 
 Push-Location $repoRoot
 try {
+    Write-Host 'Generating 5120x2160 resource overrides...'
+    $generateOutput = & $embeddedPython $ultrawideGenerator 2>&1
+    $generateExitCode = $LASTEXITCODE
+    if ($generateExitCode -ne 0) {
+        $generateOutput | Select-Object -Last 40
+        throw "Ultrawide resource generation failed with exit code $generateExitCode."
+    }
+
     Write-Host 'Checking source resources...'
     $checkOutput = & $embeddedPython $resourceChecker $resourceSource 2>&1
     $checkExitCode = $LASTEXITCODE

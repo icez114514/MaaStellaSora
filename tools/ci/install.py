@@ -4,6 +4,7 @@ import shutil
 import sys
 import json
 import os
+import subprocess
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(script_dir)
@@ -47,7 +48,14 @@ def install_deps(platform_tag: str):
 
 
 def install_resource():
-
+    subprocess.run(
+        [
+            sys.executable,
+            str(working_dir / "tools" / "generate_ultrawide_resource.py"),
+        ],
+        cwd=working_dir,
+        check=True,
+    )
     configure_ocr_model()
 
     shutil.copytree(

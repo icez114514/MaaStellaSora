@@ -10,6 +10,7 @@ from maa.custom_action import CustomAction
 from maa.context import Context
 
 from utils import logger as logger_module
+from utils.ultrawide import adapt_dataclass_layout, image_size, is_ultrawide_size
 logger = logger_module.get_logger("climb_tower_potential")
 
 
@@ -1137,6 +1138,15 @@ class ChoosePotentialAction(CustomAction):
 
         # 获取只使用一次的数据
         image = context.tasker.controller.post_screencap().wait().get()
+        width, height = image_size(image)
+        if is_ultrawide_size(width, height):
+            data.params.potential_layouts = PotentialLayouts({
+                count: [
+                    adapt_dataclass_layout(layout, width, height)
+                    for layout in layouts
+                ]
+                for count, layouts in data.params.potential_layouts.items()
+            })
         data.current_coin = screen.get_current_coin(image)
         data.refresh_cost = screen.get_refresh_cost(image)
         data.core_potential = screen.check_core_potential(image)
