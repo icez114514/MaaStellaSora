@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "ratio": [16, 9],
+  "min_size": [1920, 1080],
+  "resize_to": [
+    [3840, 2160],
+    [2560, 1440],
+    [1920, 1080]
+  ],
+  "fullscreen_toggle_fallback": true,
+  "poll_interval_seconds": 2.0
+}

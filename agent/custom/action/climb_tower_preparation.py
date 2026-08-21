@@ -10,7 +10,6 @@ from maa.custom_action import CustomAction
 from maa.context import Context
 
 from utils import logger as logger_module
-from utils.ultrawide import adapt_point, adapt_rect, image_size
 logger = logger_module.get_logger("climb_tower_preparation")
 
 
@@ -335,17 +334,11 @@ class SelectParty(CustomAction):
 
         for p in range(6):
             image = context.tasker.controller.post_screencap().wait().get()
-            width, height = image_size(image)
             logger.debug(f"开始识别第{p+1}个队伍")
             reco_names = []
             for position, roi in self.NAME_ROI.items():
                 logger.debug(f"开始识别{position}位置的旅人名称")
-                adapted_roi = adapt_rect(roi, width, height)
-                reco_name = self._recognize_trekker_name(
-                    context,
-                    adapted_roi,
-                    image,
-                )
+                reco_name = self._recognize_trekker_name(context, roi, image)
                 cleaned_reco_name = re.sub(r'\W', '', reco_name)
                 cleaned_reco_name = cleaned_reco_name.translate(table)
                 if "main" in position and cleaned_reco_name in cleaned_main_trekker_names:
@@ -355,8 +348,7 @@ class SelectParty(CustomAction):
             if len(reco_names) == 3:
                 logger.info(f"成功识别到队伍：{reco_names}")
                 return True
-            click_x, click_y = adapt_point((1245, 345), width, height)
-            context.tasker.controller.post_click(click_x, click_y).wait()
+            context.tasker.controller.post_click(1245, 345).wait()
             time.sleep(1)
 
         logger.error("没有识别到作业对应队伍，请检查旅人名称是否正确，或是否有现成作业的编队")

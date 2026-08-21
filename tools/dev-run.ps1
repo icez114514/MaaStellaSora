@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
-    [switch]$NoLaunch
+    [switch]$NoLaunch,
+    [switch]$LaunchGame16By9,
+    [string]$GameExecutable = ''
 )
 
 Set-StrictMode -Version Latest
@@ -11,7 +13,6 @@ $installRoot = Join-Path $repoRoot 'install'
 $embeddedPython = Join-Path $installRoot 'python\python.exe'
 $resourceChecker = Join-Path $repoRoot 'check_resource.py'
 $resourceSource = Join-Path $repoRoot 'assets\resource\base'
-$ultrawideGenerator = Join-Path $repoRoot 'tools\generate_ultrawide_resource.py'
 $installer = Join-Path $repoRoot 'tools\ci\install.py'
 $interfaceSource = Join-Path $repoRoot 'assets\interface.json'
 $runtimeInterface = Join-Path $installRoot 'interface.json'
@@ -19,11 +20,152 @@ $localDevMarker = Join-Path $installRoot 'local-dev.json'
 $mfaExecutable = Join-Path $installRoot 'MFAAvalonia.exe'
 $gitExecutable = (Get-Command git -ErrorAction Stop).Source
 
+if (-not ('MaaStellaSora.VisibleWindowProbe' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+namespace MaaStellaSora
+{
+    public static class VisibleWindowProbe
+    {
+        private delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumWindows(
+            EnumWindowsProc callback,
+            IntPtr lParam
+        );
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr hwnd);
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(
+            IntPtr hwnd,
+            out uint processId
+        );
+
+        public static bool ProcessHasVisibleWindow(uint expectedProcessId)
+        {
+            bool found = false;
+            EnumWindows(delegate(IntPtr hwnd, IntPtr lParam)
+            {
+                uint processId;
+                GetWindowThreadProcessId(hwnd, out processId);
+                if (processId == expectedProcessId && IsWindowVisible(hwnd))
+                {
+                    found = true;
+                    return false;
+                }
+                return true;
+            }, IntPtr.Zero);
+            return found;
+        }
+    }
+}
+'@
+}
+
+function Resolve-StellaSoraExecutable {
+    if (-not [string]::IsNullOrWhiteSpace($GameExecutable)) {
+        $configuredPath = [System.IO.Path]::GetFullPath($GameExecutable)
+        if (-not (Test-Path -LiteralPath $configuredPath -PathType Leaf)) {
+            throw "Configured StellaSora executable not found: $configuredPath"
+        }
+        return $configuredPath
+    }
+
+    $runningPaths = @(Get-Process `
+        -Name 'StellaSora' `
+        -ErrorAction SilentlyContinue | ForEach-Object {
+            try {
+                $_.Path
+            }
+            catch {
+                $null
+            }
+        } | Where-Object {
+            -not [string]::IsNullOrWhiteSpace($_)
+        } | Select-Object -Unique)
+
+    foreach ($runningPath in $runningPaths) {
+        if (Test-Path -LiteralPath $runningPath -PathType Leaf) {
+            return [System.IO.Path]::GetFullPath($runningPath)
+        }
+    }
+
+    $knownPaths = @(
+        'C:\StargazerGames\StellaSora_TW\StellaSora.exe'
+    )
+    foreach ($knownPath in $knownPaths) {
+        if (Test-Path -LiteralPath $knownPath -PathType Leaf) {
+            return [System.IO.Path]::GetFullPath($knownPath)
+        }
+    }
+
+    throw (
+        'Unable to locate StellaSora.exe. Pass -GameExecutable with the ' +
+        'full path to the installed game executable.'
+    )
+}
+
+function Start-StellaSora16By9 {
+    $gamePath = Resolve-StellaSoraExecutable
+    $expectedPath = [System.IO.Path]::GetFullPath($gamePath)
+    $matchingProcesses = @(Get-Process `
+        -Name 'StellaSora' `
+        -ErrorAction SilentlyContinue | Where-Object {
+            try {
+                [System.IO.Path]::GetFullPath($_.Path).Equals(
+                    $expectedPath,
+                    [System.StringComparison]::OrdinalIgnoreCase
+                )
+            }
+            catch {
+                $false
+            }
+        })
+
+    $visibleProcesses = @($matchingProcesses | Where-Object {
+        [MaaStellaSora.VisibleWindowProbe]::ProcessHasVisibleWindow(
+            [uint32]$_.Id
+        )
+    })
+    if ($visibleProcesses.Count -gt 0) {
+        Write-Warning (
+            'StellaSora is already visible. Unity resolution arguments only ' +
+            'apply during a clean launch; close the game and run ' +
+            'dev-run-16x9.bat again.'
+        )
+        return
+    }
+
+    foreach ($process in $matchingProcesses) {
+        Write-Host "Closing background StellaSora process $($process.Id)..."
+        Stop-Process -Id $process.Id -Force -ErrorAction Stop
+        $null = $process.WaitForExit(5000)
+        if (-not $process.HasExited) {
+            throw "StellaSora process $($process.Id) did not exit."
+        }
+    }
+
+    $gameDirectory = [System.IO.Path]::GetDirectoryName($gamePath)
+    Write-Host 'Starting StellaSora in a 2560x1440 16:9 window...'
+    Start-Process `
+        -FilePath $gamePath `
+        -WorkingDirectory $gameDirectory `
+        -ArgumentList @(
+            '-screen-width', '2560',
+            '-screen-height', '1440',
+            '-screen-fullscreen', '0'
+        )
+}
+
 foreach ($requiredPath in @(
     $embeddedPython,
     $resourceChecker,
     $resourceSource,
-    $ultrawideGenerator,
     $installer,
     $interfaceSource,
     $mfaExecutable
@@ -192,14 +334,6 @@ Stop-DevelopmentMfa
 
 Push-Location $repoRoot
 try {
-    Write-Host 'Generating 5120x2160 resource overrides...'
-    $generateOutput = & $embeddedPython $ultrawideGenerator 2>&1
-    $generateExitCode = $LASTEXITCODE
-    if ($generateExitCode -ne 0) {
-        $generateOutput | Select-Object -Last 40
-        throw "Ultrawide resource generation failed with exit code $generateExitCode."
-    }
-
     Write-Host 'Checking source resources...'
     $checkOutput = & $embeddedPython $resourceChecker $resourceSource 2>&1
     $checkExitCode = $LASTEXITCODE
@@ -261,6 +395,9 @@ try {
 
     Write-Host "Development runtime refreshed: $($devMetadata.Version)"
     if (-not $NoLaunch) {
+        if ($LaunchGame16By9) {
+            Start-StellaSora16By9
+        }
         Write-Host 'Requesting administrator privileges for MFAAvalonia...'
         Start-Process `
             -FilePath $mfaExecutable `

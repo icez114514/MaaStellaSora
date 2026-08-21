@@ -28,14 +28,12 @@ QQ交流群：**1063132902**  密码：**星塔旅人**
 
 ## 安装与使用
 
-> 默认资源支持比例为 16:9 的游戏客户端。本个人 Fork 另提供实验性的 5120×2160 资源；超宽窗口请在资源设置中选择对应的“5120x2160”项目，原有 16:9 资源不受影响。
+> 星塔助手目前只对比例为16:9的游戏客户端提供支持，如果你的游戏客户端比例不为16:9请自行寻找改分辨率方法或是使用模拟器
 
 1. 请选择带有Latest标签的版本 也可以选择带有rc、beta后缀的版本 不要选择带有Nightly、Alpha等后缀的版本
 2. 前往 [Github Release](https://github.com/SodaCodeSave/StellaSora-Auto-Helper/releases) 下载对应系统的压缩包 如果不知道是什么就选 MaaStellaSora-win-x86_64-vx.x.x.zip
 3. 解压压缩包到任意目录，并且运行依赖库安装.bat
 4. 如果需要操控Windows版星塔旅人，使用管理员权限运行 `MFAAvalonia.exe`（使用ADB的话直接启动即可）
-
-维护超宽资源时，在修改 Pipeline 坐标后执行 `python tools/generate_ultrawide_resource.py`；`tools/dev-run.ps1` 与打包脚本也会自动重新生成。
 
 ## 鸣谢
 

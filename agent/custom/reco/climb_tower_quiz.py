@@ -5,7 +5,6 @@ from maa.context import Context
 from maa.define import Rect
 
 from utils import logger as logger_module
-from utils.ultrawide import adapt_rect, image_size
 logger = logger_module.get_logger("climb_tower_quiz")
 
 
@@ -39,8 +38,7 @@ class QuizRecognition(CustomRecognition):
             logger.error(f"[问题选择] 检测选项个数出现问题")
             return CustomRecognition.AnalyzeResult(box=None, detail={})
 
-        width, height = image_size(argv.image)
-        roi = adapt_rect(self.ROIS[answer_count], width, height)
+        roi = self.ROIS[answer_count]
         node_data = context.get_node_data(argv.node_name) or {}
         prefer_650 = node_data.get("attach", {}).get("prefer_650", False)
 
