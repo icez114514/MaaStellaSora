@@ -89,6 +89,22 @@ class ConfigurationTests(unittest.TestCase):
                 policy = load_policy(path)
         self.assertFalse(policy.enabled)
         self.assertEqual(policy.resize_to[0], (2560, 1440))
+        self.assertEqual(policy.restore_to, (5120, 2160))
+
+    def test_restore_target_configuration_is_loaded(self):
+        raw = {
+            "enabled": True,
+            "ratio": [16, 9],
+            "min_size": [1920, 1080],
+            "resize_to": [[2560, 1440]],
+            "restore_to": [5120, 2160],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "window_aspect.json"
+            path.write_text(json.dumps(raw), encoding="utf-8")
+            policy = load_policy(path)
+
+        self.assertEqual(policy.restore_to, (5120, 2160))
 
 
 if __name__ == "__main__":

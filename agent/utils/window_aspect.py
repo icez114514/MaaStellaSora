@@ -25,6 +25,7 @@ class AspectPolicy:
     min_size: tuple[int, int]
     resize_to: tuple[tuple[int, int], ...]
     fullscreen_toggle_fallback: bool
+    restore_to: tuple[int, int]
     poll_interval_seconds: float
     class_pattern: str
     title_pattern: str
@@ -108,6 +109,7 @@ def load_policy(path: Path = CONFIG_PATH) -> AspectPolicy:
         min_size=_pair(raw.get("min_size", [1920, 1080]), "min_size"),
         resize_to=resize_to,
         fullscreen_toggle_fallback=bool(raw.get("fullscreen_toggle_fallback", True)),
+        restore_to=_pair(raw.get("restore_to", [5120, 2160]), "restore_to"),
         poll_interval_seconds=max(float(raw.get("poll_interval_seconds", 2.0)), 0.25),
         class_pattern=class_pattern,
         title_pattern=title_pattern,
@@ -177,6 +179,33 @@ def start_auto_resize() -> AutoResizeHandle:
     )
     thread.start()
     return AutoResizeHandle(stop_event, thread)
+
+
+def restore_game_window(path: Path = CONFIG_PATH) -> bool:
+    """Restore a running game window without launching a new process."""
+    if sys.platform != "win32":
+        print("[window-aspect] restore is only available on Windows", flush=True)
+        return False
+    try:
+        policy = load_policy(path)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as error:
+        print(f"[window-aspect] restore disabled: invalid configuration: {error}", flush=True)
+        return False
+    return _restore_game_window(policy)
+
+
+def _restore_game_window(policy: AspectPolicy) -> bool:
+    try:
+        win32 = _Win32WindowAdapter(policy)
+        hwnd = win32.find_game_window()
+        if hwnd is None:
+            print("[window-aspect] game is not running; restore skipped", flush=True)
+            return False
+        print(f"[window-aspect] {win32.restore_native_resolution(hwnd)}", flush=True)
+        return True
+    except (AttributeError, OSError) as error:
+        print(f"[window-aspect] restore failed: {error}", flush=True)
+        return False
 
 
 def _watch_for_game_window(policy: AspectPolicy, stop_event: threading.Event) -> None:
@@ -324,6 +353,52 @@ class _Win32WindowAdapter:
             f"actual client is {actual[0]}x{actual[1]}"
         )
 
+    def restore_native_resolution(self, hwnd: int) -> str:
+        current = self._size(hwnd, client=True)
+        target = self.policy.restore_to
+        monitor_rect = self._monitor_rect(hwnd)
+        monitor_size = (
+            monitor_rect.right - monitor_rect.left,
+            monitor_rect.bottom - monitor_rect.top,
+        )
+        if target[0] > monitor_size[0] or target[1] > monitor_size[1]:
+            raise OSError(
+                f"restore target {target[0]}x{target[1]} exceeds monitor "
+                f"{monitor_size[0]}x{monitor_size[1]}"
+            )
+
+        if self.user32.IsZoomed(hwnd):
+            self.user32.ShowWindow(hwnd, self.SW_RESTORE)
+            sleep(0.1)
+        self._hide_title_bar(hwnd)
+        x = monitor_rect.left + (monitor_size[0] - target[0]) // 2
+        y = monitor_rect.top + (monitor_size[1] - target[1]) // 2
+        flags = self.SWP_NOZORDER | self.SWP_NOACTIVATE | self.SWP_FRAMECHANGED
+        if not self.user32.SetWindowPos(
+            hwnd,
+            None,
+            x,
+            y,
+            target[0],
+            target[1],
+            flags,
+        ):
+            self._raise_last_error("SetWindowPos native restore")
+
+        for _ in range(20):
+            actual = self._size(hwnd, client=True)
+            if _resize_matches(target, actual):
+                return (
+                    f"game client restored from {current[0]}x{current[1]} "
+                    f"to {actual[0]}x{actual[1]} borderless"
+                )
+            sleep(0.1)
+        actual = self._size(hwnd, client=True)
+        raise OSError(
+            f"game rejected restore target {target[0]}x{target[1]}; "
+            f"actual client is {actual[0]}x{actual[1]}"
+        )
+
     def _resize_once(self, hwnd: int) -> tuple[tuple[int, int], tuple[int, int]]:
         if self.user32.IsZoomed(hwnd):
             self.user32.ShowWindow(hwnd, self.SW_RESTORE)
@@ -396,14 +471,34 @@ class _Win32WindowAdapter:
         ):
             self._raise_last_error("SetWindowPos frame refresh")
 
+    def _hide_title_bar(self, hwnd: int) -> None:
+        style = int(self.user32.GetWindowLongW(hwnd, self.GWL_STYLE)) & 0xFFFFFFFF
+        new_style = (style & ~self.WS_CAPTION) | self.WS_POPUP
+        if new_style == style:
+            return
+        ctypes.set_last_error(0)
+        previous = self.user32.SetWindowLongW(
+            hwnd,
+            self.GWL_STYLE,
+            ctypes.c_long(new_style).value,
+        )
+        if previous == 0 and ctypes.get_last_error() != 0:
+            self._raise_last_error("SetWindowLongW borderless restore")
+
     def _work_rect(self, hwnd: int) -> _Rect:
+        return self._monitor_info(hwnd).rcWork
+
+    def _monitor_rect(self, hwnd: int) -> _Rect:
+        return self._monitor_info(hwnd).rcMonitor
+
+    def _monitor_info(self, hwnd: int) -> _MonitorInfo:
         monitor = self.user32.MonitorFromWindow(hwnd, self.MONITOR_DEFAULTTONEAREST)
         if not monitor:
             self._raise_last_error("MonitorFromWindow")
         info = _MonitorInfo(cbSize=ctypes.sizeof(_MonitorInfo))
         if not self.user32.GetMonitorInfoW(monitor, ctypes.byref(info)):
             self._raise_last_error("GetMonitorInfoW")
-        return info.rcWork
+        return info
 
     def _rect(self, hwnd: int, client: bool) -> _Rect:
         rect = _Rect()
@@ -420,3 +515,14 @@ class _Win32WindowAdapter:
     def _raise_last_error(operation: str) -> None:
         error_code = ctypes.get_last_error()
         raise OSError(error_code, f"{operation} failed", None, error_code)
+
+
+def _main() -> int:
+    if sys.argv[1:] != ["--restore-native"]:
+        print("Usage: python window_aspect.py --restore-native", flush=True)
+        return 64
+    return 0 if restore_game_window() else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(_main())

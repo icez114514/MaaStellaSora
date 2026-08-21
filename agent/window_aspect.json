@@ -8,5 +8,6 @@
     [1920, 1080]
   ],
   "fullscreen_toggle_fallback": true,
+  "restore_to": [5120, 2160],
   "poll_interval_seconds": 2.0
 }
