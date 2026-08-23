@@ -585,13 +585,47 @@
       }
     },
     "next": [
-      "猎影合围_协助_协助讨伐主界面",
-      "[JumpBack]通用_点击空白处继续",
+      "[JumpBack]猎影合围_协助_点击空白并点击中心",
       "[JumpBack]猎影合围_围猎等级提升",
-      "[JumpBack]猎影合围_关闭添加好友界面"
+      "[JumpBack]猎影合围_关闭添加好友界面",
+      "猎影合围_协助_协助讨伐主界面"
     ],
     "pre_delay": 0,
     "post_delay": 0
+  },
+  "猎影合围_协助_点击空白并点击中心": {
+    "recognition": {
+      "type": "And",
+      "param": {
+        "all_of": [
+          "通用_点击空白处继续"
+        ]
+      }
+    },
+    "action": {
+      "type": "Click"
+    },
+    "next": [
+      "猎影合围_协助_点击画面中心"
+    ],
+    "post_delay": 300
+  },
+  "猎影合围_协助_点击画面中心": {
+    "recognition": {
+      "type": "DirectHit"
+    },
+    "action": {
+      "type": "Click",
+      "param": {
+        "target": [
+          600,
+          320,
+          80,
+          80
+        ]
+      }
+    },
+    "post_delay": 500
   },
   "猎影合围_关闭添加好友界面": {
     "recognition": {

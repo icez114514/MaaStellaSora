@@ -140,5 +140,145 @@
       },
       "type": "OCR"
     }
+  },
+  "心链送礼新_选择旅人": {
+    "action": {
+      "param": {
+        "custom_action": "HeartlinkGiftSelectTrekker"
+      },
+      "type": "Custom"
+    },
+    "attach": {
+      "trekker": ""
+    },
+    "focus": {
+      "Node.Action.Starting": "正在选择送礼旅人"
+    },
+    "next": [
+      "心链_选择礼物"
+    ],
+    "post_wait_freezes": 500
+  },
+  "心链送礼新_选择十个蓝色礼物": {
+    "action": {
+      "param": {
+        "custom_action": "HeartlinkGiftSelectBlue"
+      },
+      "type": "Custom"
+    },
+    "focus": {
+      "Node.Action.Starting": "正在选择10个蓝色礼物"
+    },
+    "next": [
+      "心链_赠送礼物"
+    ],
+    "post_wait_freezes": 500
+  },
+  "心链送礼新_识别已选礼物数量": {
+    "recognition": {
+      "param": {
+        "expected": [
+          "HeartlinkGiftCount"
+        ],
+        "roi": [
+          1000,
+          640,
+          240,
+          60
+        ]
+      },
+      "type": "OCR"
+    }
+  },
+  "心链送礼新_识别蓝色礼物": {
+    "recognition": {
+      "param": {
+        "order_by": "Score",
+        "roi": [
+          600,
+          230,
+          500,
+          400
+        ],
+        "template": [
+          "gift_blue_good.png"
+        ],
+        "threshold": 0.65
+      },
+      "type": "TemplateMatch"
+    }
+  },
+  "心链送礼新_向下滚动一步": {
+    "action": {
+      "param": {
+        "begin": [
+          850,
+          480
+        ],
+        "duration": 800,
+        "end": [
+          850,
+          230
+        ],
+        "end_hold": 500
+      },
+      "type": "Swipe"
+    },
+    "recognition": {
+      "param": {},
+      "type": "DirectHit"
+    }
+  },
+  "心链送礼新_向下滚动": {
+    "action": {
+      "param": {
+        "begin": [
+          850,
+          480
+        ],
+        "end": [
+          850,
+          230
+        ],
+        "duration": 800,
+        "end_hold": 500
+      },
+      "type": "Swipe"
+    },
+    "focus": {
+      "Node.Action.Starting": "正在向下滚动礼物列表"
+    },
+    "next": [
+      "心链送礼新_选择蓝色礼物"
+    ],
+    "post_wait_freezes": 500,
+    "recognition": {
+      "param": {},
+      "type": "DirectHit"
+    }
+  },
+  "心链送礼新_选择蓝色礼物": {
+    "action": {
+      "param": {},
+      "type": "Click"
+    },
+    "focus": {
+      "Node.Recognition.Failed": "没有找到蓝色礼物 跳过",
+      "Node.Recognition.Starting": "正在选择蓝色礼物"
+    },
+    "next": [
+      "心链_赠送礼物"
+    ],
+    "recognition": {
+      "param": {
+        "order_by": "Score",
+        "template": [
+          "gift_blue_good.png"
+        ],
+        "threshold": 0.5
+      },
+      "type": "TemplateMatch"
+    },
+    "timeout": 3000
   }
 }

@@ -11,6 +11,8 @@ __all__ = [
     "ShopAction",
     "EnhanceAction",
     "InviteAuto",
+    "HeartlinkGiftSelectTrekker",
+    "HeartlinkGiftSelectBlue",
     "UToolCalcRepeat",
     "AscensionPreparation",
     "AscensionLoop",
