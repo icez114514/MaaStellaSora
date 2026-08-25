@@ -429,7 +429,8 @@
       },
       "type": "OCR"
     },
-    "post_wait_freezes": 1000
+    "post_wait_freezes": 1000,
+    "post_delay": 1500
   },
   "邀约_跳过": {
     "action": {
@@ -718,7 +719,8 @@
         ]
       },
       "type": "OCR"
-    }
+    },
+    "post_delay": 750
   },
   "邀约_达上限": {
     "recognition": {
