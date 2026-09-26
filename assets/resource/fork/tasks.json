@@ -1,0 +1,76 @@
+{
+  "task": [
+    {
+      "name": "Fork_自动刷650",
+      "label": "自動刷 650（Fork）",
+      "entry": "星塔_入口_agent",
+      "description": "重複挑戰至首次商店；達到 1200 金幣即停止，潛能刷新受限或金幣不足時放棄重試。",
+      "option": [
+        "新版爬塔_开始位置",
+        "新版爬塔_属性塔",
+        "新版爬塔_潜能最大刷新次数"
+      ],
+      "pipeline_override": {
+        "星塔_入口_agent": {"attach": {"reset_state": true}},
+        "星塔_节点_进入商店_agent": {
+          "next": ["星塔_自动刷650_检查金币_agent"]
+        },
+        "星塔_循环用节点_agent": {
+          "action": {"param": {"custom_action": "fork_auto_farm_650_loop"}}
+        },
+        "星塔_节点_进行对话选择_agent": {
+          "recognition": {"param": {"custom_recognition": "fork_event_650_first"}}
+        },
+        "星塔_节点_选择潜能_agent": {
+          "recognition": {"param": {"custom_recognition": "fork_choose_potential_650"}}
+        }
+      }
+    },
+    {
+      "name": "Fork_心链送礼",
+      "label": "心鏈送禮（Fork）",
+      "entry": "心链_入口",
+      "description": "可指定旅人，並選擇最高分禮物或只送 10 個藍色禮物。",
+      "option": ["Fork_心链旅人", "Fork_心链礼物类型"],
+      "pipeline_override": {
+        "心链_点击邮寄": {"next": ["心链送礼新_选择旅人"]}
+      }
+    }
+  ],
+  "option": {
+    "Fork_心链旅人": {
+      "type": "input",
+      "label": "旅人名稱",
+      "inputs": [{
+        "name": "旅人名稱",
+        "pipeline_type": "string",
+        "default": "",
+        "description": "留空或輸入 x 時維持目前選取的旅人。"
+      }],
+      "pipeline_override": {
+        "心链送礼新_选择旅人": {"attach": {"trekker": "{旅人名稱}"}}
+      }
+    },
+    "Fork_心链礼物类型": {
+      "type": "select",
+      "label": "贈送的禮物",
+      "default_case": "最高分禮物",
+      "cases": [
+        {
+          "name": "最高分禮物",
+          "pipeline_override": {
+            "心链送礼新_选择旅人": {"next": ["心链_选择礼物"]}
+          }
+        },
+        {
+          "name": "只送藍色禮物",
+          "pipeline_override": {
+            "心链送礼新_选择旅人": {
+              "next": ["心链送礼新_选择十个蓝色礼物"]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

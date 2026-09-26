@@ -1,0 +1,80 @@
+{
+  "邀约_点击空白": {
+    "action": {
+      "param": {},
+      "type": "Click"
+    },
+    "recognition": {
+      "param": {
+        "expected": [
+          "點選空白",
+          "處繼續"
+        ],
+        "roi": [
+          471,
+          486,
+          335,
+          216
+        ]
+      },
+      "type": "OCR"
+    },
+    "post_wait_freezes": 1000,
+    "post_delay": 1500
+  },
+  "邀约_还是算了": {
+    "action": {
+      "param": {},
+      "type": "Click"
+    },
+    "focus": {
+      "Node.Recognition.Succeeded": "还是算了"
+    },
+    "recognition": {
+      "param": {
+        "expected": [
+          "還是算了"
+        ],
+        "roi": [
+          795,
+          606,
+          151,
+          58
+        ]
+      },
+      "type": "OCR"
+    },
+    "next": [
+      "邀约_送出礼物后点击人物_1"
+    ],
+    "post_wait_freezes": 1000
+  },
+  "邀约_送出礼物": {
+    "action": {
+      "param": {},
+      "type": "Click"
+    },
+    "focus": {
+      "Node.Recognition.Succeeded": "邀约_送出礼物"
+    },
+    "recognition": {
+      "param": {
+        "expected": [
+          "送出禮物",
+          "贈送禮物"
+        ],
+        "roi": [
+          1041,
+          613,
+          133,
+          41
+        ]
+      },
+      "type": "OCR"
+    },
+    "next": [
+      "邀约_送出礼物后点击人物_1"
+    ],
+    "timeout": 30000
+  }
+}

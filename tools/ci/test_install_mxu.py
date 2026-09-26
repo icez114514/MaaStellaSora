@@ -193,6 +193,10 @@ class InstallMxuTests(unittest.TestCase):
             transformed["controller"][0]["attach_resource_path"],
             ["resource/windows"],
         )
+        self.assertEqual(
+            transformed["agent"]["child_args"],
+            ["-u", "./agent/fork_ext/entry.py"],
+        )
         self.assertEqual(source_path.read_text(encoding="utf-8"), source_text)
 
     def test_release_asset_name_avoids_mfa_and_mirror_patterns(self) -> None:

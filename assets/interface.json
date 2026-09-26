@@ -14,7 +14,7 @@
         "child_exec": "python",
         "child_args": [
             "-u",
-            "./../agent/main.py"
+            "./../agent/fork_ext/entry.py"
         ],
         "timeout": -1
     },
@@ -47,28 +47,35 @@
         {
             "name": "官服",
             "path": [
-                "{PROJECT_DIR}/resource/base"
+                "{PROJECT_DIR}/resource/base",
+                "{PROJECT_DIR}/resource/fork/base"
             ]
         },
         {
             "name": "台服",
             "path": [
                 "{PROJECT_DIR}/resource/base",
-                "{PROJECT_DIR}/resource/tw"
+                "{PROJECT_DIR}/resource/tw",
+                "{PROJECT_DIR}/resource/fork/base",
+                "{PROJECT_DIR}/resource/fork/tw"
             ]
         },
         {
             "name": "国际服",
             "path": [
                 "{PROJECT_DIR}/resource/base",
-                "{PROJECT_DIR}/resource/en"
+                "{PROJECT_DIR}/resource/en",
+                "{PROJECT_DIR}/resource/fork/base",
+                "{PROJECT_DIR}/resource/fork/en"
             ]
         },
         {
             "name": "日服",
             "path": [
                 "{PROJECT_DIR}/resource/base",
-                "{PROJECT_DIR}/resource/jp"
+                "{PROJECT_DIR}/resource/jp",
+                "{PROJECT_DIR}/resource/fork/base",
+                "{PROJECT_DIR}/resource/fork/jp"
             ]
         }
     ],
@@ -88,7 +95,8 @@
         "resource/tasks/operation.json",
         "resource/tasks/proving_grounds.json",
         "resource/tasks/climb_tower.json",
-        "resource/tasks/climb_tower_presets.json"
+        "resource/tasks/climb_tower_presets.json",
+        "resource/fork/tasks.json"
     ],
     "option": {
         "自定义快速作战次数": {

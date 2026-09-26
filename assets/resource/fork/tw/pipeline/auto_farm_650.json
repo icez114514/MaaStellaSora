@@ -1,0 +1,33 @@
+{
+  "星塔_自动刷650_放弃_agent": {
+    "recognition": {
+      "type": "OCR",
+      "param": {
+        "expected": [
+          "放棄"
+        ],
+        "roi": [
+          380,
+          460,
+          240,
+          110
+        ]
+      }
+    },
+    "action": {
+      "type": "Click",
+      "param": {"target": true}
+    },
+    "next": [
+      "星塔_保存记录_agent",
+      "星塔_回到难度选择界面_agent",
+      "星塔_回到出发界面_agent",
+      "星塔_回到主页_agent",
+      "[JumpBack]星塔_确认_agent",
+      "[JumpBack]星塔_点击空白处关闭_agent",
+      "[JumpBack]星塔_默契提升_agent"
+    ],
+    "post_delay": 800,
+    "timeout": 5000
+  }
+}

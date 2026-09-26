@@ -1,0 +1,182 @@
+{
+  "邀约_点击空白": {
+    "action": {
+      "param": {},
+      "type": "Click"
+    },
+    "recognition": {
+      "param": {
+        "expected": [
+          "点击空白",
+          "处继续"
+        ],
+        "roi": [
+          471,
+          486,
+          335,
+          216
+        ]
+      },
+      "type": "OCR"
+    },
+    "post_wait_freezes": 1000,
+    "post_delay": 1500
+  },
+  "邀约_还是算了": {
+    "action": {
+      "param": {},
+      "type": "Click"
+    },
+    "focus": {
+      "Node.Recognition.Succeeded": "还是算了"
+    },
+    "recognition": {
+      "param": {
+        "expected": [
+          "还是算了"
+        ],
+        "roi": [
+          795,
+          606,
+          151,
+          58
+        ]
+      },
+      "type": "OCR"
+    },
+    "next": [
+      "邀约_送出礼物后点击人物_1"
+    ],
+    "post_wait_freezes": 1000
+  },
+  "邀约_送出礼物": {
+    "action": {
+      "param": {},
+      "type": "Click"
+    },
+    "focus": {
+      "Node.Recognition.Succeeded": "邀约_送出礼物"
+    },
+    "recognition": {
+      "param": {
+        "expected": [
+          "送出礼物"
+        ],
+        "roi": [
+          1041,
+          613,
+          133,
+          41
+        ]
+      },
+      "type": "OCR"
+    },
+    "next": [
+      "邀约_送出礼物后点击人物_1"
+    ],
+    "timeout": 30000
+  },
+  "邀约_默契提升": {
+    "action": {
+      "param": {},
+      "type": "Click"
+    },
+    "recognition": {
+      "param": {
+        "expected": [
+          "默契",
+          "提升"
+        ],
+        "roi": [
+          789,
+          200,
+          268,
+          81
+        ]
+      },
+      "type": "OCR"
+    },
+    "post_delay": 750
+  },
+  "邀约_送出礼物后点击人物_1": {
+    "recognition": {
+      "type": "DirectHit"
+    },
+    "action": {
+      "param": {
+        "target": [
+          360,
+          300,
+          120,
+          160
+        ]
+      },
+      "type": "Click"
+    },
+    "timeout": 30000,
+    "next": [
+      "邀约_送出礼物后点击人物_2"
+    ],
+    "post_delay": 500
+  },
+  "邀约_送出礼物后点击人物_2": {
+    "recognition": {
+      "type": "DirectHit"
+    },
+    "action": {
+      "param": {
+        "target": [
+          360,
+          300,
+          120,
+          160
+        ]
+      },
+      "type": "Click"
+    },
+    "next": [
+      "邀约_送出礼物后点击人物_3"
+    ],
+    "post_delay": 500
+  },
+  "邀约_送出礼物后点击人物_3": {
+    "recognition": {
+      "type": "DirectHit"
+    },
+    "action": {
+      "param": {
+        "target": [
+          360,
+          300,
+          120,
+          160
+        ]
+      },
+      "type": "Click"
+    },
+    "next": [
+      "邀约_送礼完成处理"
+    ],
+    "post_delay": 2000
+  },
+  "邀约_送礼完成处理": {
+    "recognition": {
+      "type": "DirectHit"
+    },
+    "action": {
+      "type": "DoNothing"
+    },
+    "next": [
+      {
+        "jump_back": true,
+        "name": "邀约_默契提升"
+      },
+      {
+        "jump_back": true,
+        "name": "邀约_点击空白"
+      },
+      "邀约_已回到邀约界面"
+    ],
+    "timeout": 30000
+  }
+}

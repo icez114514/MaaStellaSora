@@ -88,7 +88,11 @@ def transform_interface(interface: dict[str, Any], version: str) -> dict[str, An
     if not isinstance(agent, dict):
         raise ValueError("interface.agent must be an object")
     agent["child_exec"] = "./python/python.exe"
-    agent["child_args"] = ["-u", "./agent/main.py"]
+    source_entry = agent.get("child_args", ["-u", "./../agent/main.py"])[-1].replace("\\", "/")
+    prefix = "./../agent/"
+    if not source_entry.startswith(prefix):
+        raise ValueError(f"unexpected agent entry: {source_entry}")
+    agent["child_args"] = ["-u", "./agent/" + source_entry[len(prefix):]]
     agent.pop("timeout", None)
 
     resources = transformed.get("resource")
@@ -297,7 +301,10 @@ def validate_package(install_dir: Path) -> dict[str, Any]:
         raise ValueError("interface.agent is invalid or still contains timeout")
     if agent.get("child_exec") != "./python/python.exe":
         raise ValueError("interface.agent.child_exec is not MXU-compatible")
-    if agent.get("child_args") != ["-u", "./agent/main.py"]:
+    child_args = agent.get("child_args")
+    if (not isinstance(child_args, list) or len(child_args) != 2
+            or child_args[0] != "-u" or not isinstance(child_args[1], str)
+            or not child_args[1].startswith("./agent/")):
         raise ValueError("interface.agent.child_args is not MXU-compatible")
 
     referenced_files: list[tuple[str, str]] = [
@@ -305,7 +312,6 @@ def validate_package(install_dir: Path) -> dict[str, Any]:
         (str(interface.get("license", "")), "interface.license"),
         (agent["child_exec"].removeprefix("./"), "interface.agent.child_exec"),
     ]
-    child_args = agent["child_args"]
     referenced_files.append(
         (child_args[-1].removeprefix("./"), "interface.agent.child_args")
     )
